@@ -1,0 +1,6 @@
+api/GetStops
+Req:
+{"Point1":{"Latitude":52.35962795783618,"Longitude":31.01326704025269},"Point2":{"Latitude":52.35253797865371,"Longitude":31.05420827865601}}
+Res:
+{"result":{"StopId":"10649612","StopName":"Госпиталь","Point":{"Latitude":52.35412752307743,"Longitude":31.03749418258667},"Bearing":265,"StopType":1,"Address":"Дубровный проезд, Гомель"}}
+{"result":{"StopId":"10651660","StopName":"Химы","Point":{"Latitude":52.35416306600066,"Longitude":31.046442985534668},"Bearing":272,"StopType":1,"Address":"Дубравная улица, Гомель"}}

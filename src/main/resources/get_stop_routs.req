@@ -1,0 +1,6 @@
+api/GetStopRouts
+Req:
+{"StopId":"6065164","Types":null}
+Res:
+{"result":{"RouteId":"1729548","Type":3,"Number":"114","Direction":true,"StartStopName":"АВ Гомель","FinishStopName":"Терешковичи"}}
+{"result":{"RouteId":"1740812","Type":3,"Number":"136","Direction":true,"StartStopName":"АВ Гомель","FinishStopName":"Зябровка "}}

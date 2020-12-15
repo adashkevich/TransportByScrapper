@@ -1,0 +1,5 @@
+api/GetSchedule
+Req:
+{"StopId":"10271756","RouteId":"7258124"}
+Res:
+{"Id":{"StopId":"10271756","RouteId":"7258124"},"Items":[{"Days":"1","Hour":"08","Minutes":"19"},{"Days":"2","Hour":"08","Minutes":"19"},{"Days":"3","Hour":"08","Minutes":"19"},{"Days":"4","Hour":"08","Minutes":"19"},{"Days":"5","Hour":"08","Minutes":"19"},{"Days":"1","Hour":"11","Minutes":"44"},{"Days":"2","Hour":"11","Minutes":"44"},{"Days":"3","Hour":"11","Minutes":"44"},{"Days":"4","Hour":"11","Minutes":"44"},{"Days":"5","Hour":"11","Minutes":"44"},{"Days":"1","Hour":"15","Minutes":"18"},{"Days":"2","Hour":"15","Minutes":"18"},{"Days":"3","Hour":"15","Minutes":"18"},{"Days":"4","Hour":"15","Minutes":"18"},{"Days":"5","Hour":"15","Minutes":"18"},{"Days":"6","Hour":"08","Minutes":"19"},{"Days":"7","Hour":"08","Minutes":"19"},{"Days":"6","Hour":"11","Minutes":"44"},{"Days":"7","Hour":"11","Minutes":"44"},{"Days":"6","Hour":"15","Minutes":"18"},{"Days":"7","Hour":"15","Minutes":"18"}]}
