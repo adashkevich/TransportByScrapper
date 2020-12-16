@@ -1,10 +1,13 @@
 package com.adashkevich.transport_by_parser;
 
 import com.adashkevich.transport_by_parser.model.Rout;
+import com.adashkevich.transport_by_parser.model.Schedule;
 import com.adashkevich.transport_by_parser.model.Stop;
+import com.adashkevich.transport_by_parser.model.dto.StopRoutSchedule;
 import com.adashkevich.transport_by_parser.model.dto.StopRouts;
 import com.adashkevich.transport_by_parser.model.gson.BusGsonWrapper;
 import com.adashkevich.transport_by_parser.model.gson.RoutGsonWrapper;
+import com.adashkevich.transport_by_parser.model.gson.ScheduleGsonWrapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import okhttp3.*;
@@ -31,10 +34,32 @@ public class Parser {
 //            parseBusStops();
 //            System.out.println(getStopsFromJson());
 //            getStopRoutes("6065164");
-            System.out.println(getRoutsFromJson());
+//            System.out.println(getRoutsFromJson());
+            getSchedule("10271756", "7258124");
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static void getSchedule(String stopId, String routeId) throws IOException {
+        RequestBody body = RequestBody.create(gson.toJson(new StopRoutSchedule(stopId, routeId)), MediaType.get("application/json; charset=utf-8"));
+
+        Request request = new Request.Builder()
+                .url("http://212.98.184.62/api/GetSchedule")
+                .post(body)
+                .build();
+
+        Response response = client.newCall(request).execute();
+
+        String content = Objects.requireNonNull(response.body()).string();
+
+        List<Schedule> routs = new ArrayList<>();
+
+        parseTransportByResponse(content, (entity) -> {
+            routs.addAll(gson.fromJson(entity, ScheduleGsonWrapper.class).item);
+        });
+
+        FileUtils.writeStringToFile(new File("schedule.json"), gson.toJson(routs), Charset.defaultCharset());
     }
 
     public static void getStopRoutes(String stopId) throws IOException {

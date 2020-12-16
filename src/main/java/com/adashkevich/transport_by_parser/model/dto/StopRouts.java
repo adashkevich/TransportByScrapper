@@ -3,6 +3,7 @@ package com.adashkevich.transport_by_parser.model.dto;
 import com.google.gson.annotations.SerializedName;
 
 public class StopRouts {
+
     @SerializedName(value = "StopId")
     String stopId;
     @SerializedName(value = "Types")
