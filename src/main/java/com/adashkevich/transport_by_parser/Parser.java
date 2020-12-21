@@ -52,9 +52,9 @@ public class Parser {
 //            getSchedule("10271756", "7258124");
 //            extractAllStopRoutes();
 //            System.out.println(getRouteStops("808972"));
-            setStopsToRoutes();
+//            setStopsToRoutes();
 //            setSchedulesToStops();
-//            convertJson();
+            convertJson();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -80,6 +80,7 @@ public class Parser {
             GoTransRout gtRout;
             if (foundGtRout.isPresent()) {
                 gtRout = foundGtRout.get();
+                System.out.println("Duplicate found for Rout " + r.routeId);
             } else {
                 gtRout = new GoTransRout();
                 gtRout.type = routType;
@@ -87,43 +88,11 @@ public class Parser {
                 gtRout.code = (routType == BUS ? "a" : "t") + Translit.apply(r.routNumber);
             }
 
-            GoTransDirection gtDirection = new GoTransDirection();
-            gtDirection.transportByRoutId = r.routeId;
-            gtDirection.isForward = r.direction;
-            gtDirection.name = r.startStopName + " - " + r.finishStopName;
 
-            if (r.stops != null) {
-                for (int i = 0; i < r.stops.size(); ++i) {
-                    GoTransRoutePoint grRoutPoint = new GoTransRoutePoint();
-                    grRoutPoint.transportByStopId = r.stops.get(i).stopId;
-                    grRoutPoint.position = (short) (i + 1);
-                    grRoutPoint.name = r.stops.get(i).name;
-
-                    if (r.stops.get(i).schedules != null) {
-                        Map<Short, GoTransSchedule> gtScheduleMap = new TreeMap<>();
-                        r.stops.get(i).schedules.forEach(sc -> {
-                            GoTransSchedule gtSchedule;
-                            if (gtScheduleMap.containsKey(sc.day)) {
-                                gtSchedule = gtScheduleMap.get(sc.day);
-                            } else {
-                                gtSchedule = new GoTransSchedule();
-                                gtSchedule.days = String.valueOf(sc.day);
-                                gtScheduleMap.put(sc.day, gtSchedule);
-                            }
-                            gtSchedule.times.add(String.format("%02d:%02d", sc.hour, sc.minutes));
-                        });
-
-                        grRoutPoint.schedules = gtScheduleMap.entrySet().stream()
-                                .sorted(Map.Entry.comparingByKey())
-                                .map(Map.Entry::getValue)
-                                .collect(Collectors.toList());
-                    }
-
-                    gtDirection.routePoints.add(grRoutPoint);
-                }
-            }
-
-            gtRout.directions.add(gtDirection);
+            setGoTransDirection(r, r.direction, r.stops)
+                    .ifPresent(d -> gtRout.directions.add(d));
+            setGoTransDirection(r, !r.direction, r.backwardStops)
+                    .ifPresent(d -> gtRout.directions.add(d));
 
             if (!foundGtRout.isPresent()) {
                 gtRoutes.add(gtRout);
@@ -133,24 +102,70 @@ public class Parser {
         FileUtils.writeStringToFile(new File("go_trans.json"), gson.toJson(gtRoutes), Charset.defaultCharset());
     }
 
+    public static Optional<GoTransDirection> setGoTransDirection(Rout rout, boolean isForward, List<Stop> stops) {
+        if (stops != null) {
+            GoTransDirection gtDirection = new GoTransDirection();
+            gtDirection.transportByRoutId = rout.routeId;
+            gtDirection.isForward = isForward;
+            gtDirection.name = rout.getRoutName(isForward);
+
+            for (int i = 0; i < stops.size(); ++i) {
+                GoTransRoutePoint grRoutPoint = new GoTransRoutePoint();
+                grRoutPoint.transportByStopId = stops.get(i).stopId;
+                grRoutPoint.position = (short) (i + 1);
+                grRoutPoint.name = stops.get(i).name;
+
+                if (stops.get(i).schedules != null) {
+                    Map<Short, GoTransSchedule> gtScheduleMap = new TreeMap<>();
+                    stops.get(i).schedules.forEach(sc -> {
+                        GoTransSchedule gtSchedule;
+                        if (gtScheduleMap.containsKey(sc.day)) {
+                            gtSchedule = gtScheduleMap.get(sc.day);
+                        } else {
+                            gtSchedule = new GoTransSchedule();
+                            gtSchedule.days = String.valueOf(sc.day);
+                            gtScheduleMap.put(sc.day, gtSchedule);
+                        }
+                        gtSchedule.times.add(String.format("%02d:%02d", sc.hour, sc.minutes));
+                        Collections.sort(gtSchedule.times);
+                    });
+
+                    grRoutPoint.schedules = gtScheduleMap.entrySet().stream()
+                            .sorted(Map.Entry.comparingByKey())
+                            .map(Map.Entry::getValue)
+                            .collect(Collectors.toList());
+                }
+
+                gtDirection.routePoints.add(grRoutPoint);
+            }
+            return Optional.of(gtDirection);
+        }
+        return Optional.empty();
+    }
+
     public static void setSchedulesToStops() throws IOException {
         List<Rout> routs = getRoutsFromJson("routs_with_stops.json");
 
         routs.forEach(r -> {
             System.out.println("Start processing Rout " + r.routeId);
-            if (r.stops != null) {
-                r.stops.forEach(s -> {
-                    try {
-                        s.schedules = getSchedule(s.stopId, r.routeId);
-                    } catch (Exception e) {
-                        System.out.println("Failed to get Schedule for stop " + s.stopId + " on rout " + r.routeId);
-                        e.printStackTrace();
-                    }
-                });
-            }
+            setScheduleToStops(r.stops, r.routeId);
+            setScheduleToStops(r.backwardStops, r.routeId);
         });
 
         FileUtils.writeStringToFile(new File("routs_with_stops_and_schedule.json"), gson.toJson(routs), Charset.defaultCharset());
+    }
+
+    public static void setScheduleToStops(List<Stop> stops, String routeId) {
+        if (stops != null) {
+            stops.forEach(s -> {
+                try {
+                    s.schedules = getSchedule(s.stopId, routeId);
+                } catch (Exception e) {
+                    System.err.println("Failed to get Schedule for stop " + s.stopId + " on rout " + routeId);
+                    e.printStackTrace();
+                }
+            });
+        }
     }
 
     public static void setStopsToRoutes() throws IOException {

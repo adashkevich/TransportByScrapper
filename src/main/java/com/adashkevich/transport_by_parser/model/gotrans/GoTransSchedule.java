@@ -7,4 +7,8 @@ public class GoTransSchedule {
 
     public String days;
     public List<String> times = new ArrayList<>();
+
+    public List<String> getTimes() {
+        return times;
+    }
 }

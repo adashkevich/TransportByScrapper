@@ -38,4 +38,16 @@ public class Rout {
     public String display() {
         return routNumber + ": " + startStopName + " — " + finishStopName;
     }
+
+    public String getRoutName(boolean direction) {
+        return direction ? getRoutName() : getBackwardRoutName();
+    }
+
+    public String getRoutName() {
+        return startStopName + " - " + finishStopName;
+    }
+
+    public String getBackwardRoutName() {
+        return finishStopName + " - " + startStopName;
+    }
 }
