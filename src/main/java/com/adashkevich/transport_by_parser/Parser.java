@@ -88,7 +88,6 @@ public class Parser {
                 gtRout.code = (routType == BUS ? "a" : "t") + Translit.apply(r.routNumber);
             }
 
-
             setGoTransDirection(r, r.direction, r.stops)
                     .ifPresent(d -> gtRout.directions.add(d));
             setGoTransDirection(r, !r.direction, r.backwardStops)
