@@ -3,6 +3,8 @@ package com.adashkevich.transport_by_parser.model;
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.List;
+
 public class Stop {
 
     @SerializedName(value = "stopId", alternate = "StopId")
@@ -15,6 +17,8 @@ public class Stop {
     public short stopType;
     @SerializedName(value = "address", alternate = "Address")
     public String address;
+
+    public List<Schedule> schedules;
 
     @Override
     public String toString() {

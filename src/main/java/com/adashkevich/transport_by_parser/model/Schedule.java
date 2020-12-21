@@ -6,11 +6,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 public class Schedule {
 
     @SerializedName(value = "day", alternate = "Days")
-    short day;
+    public short day;
     @SerializedName(value = "hour", alternate = "Hour")
-    short hour;
+    public short hour;
     @SerializedName(value = "minutes", alternate = "Minutes")
-    short minutes;
+    public short minutes;
 
     @Override
     public String toString() {
