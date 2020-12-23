@@ -1,0 +1,3 @@
+agency_id,agency_name,agency_url,agency_timezone,agency_phone,agency_email,agency_lang,agency_fare_url
+gomel_gopt,Коммунальное транспортное унитарное предприятие «Гомельоблпассажиртранс»,http://gopt.by/,MSK,+375 (232) 23-87-43,,ru,
+gomel_get,Коммунальное унитарное предприятие «ГОРЭЛЕКТРОТРАНСПОРТ»,http://get.gomel.by/,MSK,+375 (232) 21-45-75,,ru,
