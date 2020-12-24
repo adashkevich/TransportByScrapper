@@ -12,7 +12,7 @@ public class Rout {
     @SerializedName(value = "routType", alternate = "Type")
 //    0 bus
 //    1 trolleybus
-//    3 shuttle bus
+//    3 route taxi
 //    26 electric train
 //    31 regional train
 //    28 interregional trains of economy class
@@ -30,11 +30,6 @@ public class Rout {
     public List<Stop> stops;
     public List<Stop> backwardStops;
 
-    @Override
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this);
-    }
-
     public String display() {
         return routNumber + ": " + startStopName + " — " + finishStopName;
     }
@@ -49,5 +44,14 @@ public class Rout {
 
     public String getBackwardRoutName() {
         return finishStopName + " - " + startStopName;
+    }
+
+    public String  view() {
+        return routNumber + ": " + getRoutName();
+    }
+
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
     }
 }

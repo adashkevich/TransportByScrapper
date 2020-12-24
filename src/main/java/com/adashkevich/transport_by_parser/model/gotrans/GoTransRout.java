@@ -6,7 +6,7 @@ import java.util.List;
 public class GoTransRout {
 
     public enum RoutType {
-        BUS, TROLLEYBUS
+        BUS, TROLLEYBUS, MBUS
     }
 
     public RoutType type;

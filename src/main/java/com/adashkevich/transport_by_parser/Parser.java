@@ -13,7 +13,7 @@ import com.adashkevich.transport_by_parser.model.gson.RouteStopsGsonWrapper;
 import com.adashkevich.transport_by_parser.model.gson.StopGsonWrapper;
 import com.adashkevich.transport_by_parser.model.gson.RoutGsonWrapper;
 import com.adashkevich.transport_by_parser.model.gson.ScheduleGsonWrapper;
-import com.adashkevich.transport_by_parser.utils.JsonConverterUtil;
+import com.adashkevich.transport_by_parser.utils.GoTransUtil;
 import com.adashkevich.transport_by_parser.utils.Translit;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -34,8 +34,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.adashkevich.transport_by_parser.model.gotrans.GoTransRout.RoutType.BUS;
-
 public class Parser {
 
     protected static final Gson gson = new Gson();
@@ -52,6 +50,12 @@ public class Parser {
 //            System.out.println(getRoutsFromJson().stream().map(r -> r.routType + ": " + r.routNumber).collect(Collectors.joining(",")));
 //            System.out.println(getRoutsFromJson().stream().filter(distinctByKey(r -> r.routType)).map(r -> String.valueOf(r.routType)).collect(Collectors.joining(",")));
 //            System.out.println(getRoutsFromJson().stream().filter(r -> JsonConverterUtil.getPublicTransportRoutTypes().contains(r.routType)).map(r -> r.routNumber).collect(Collectors.joining(",")));
+//            System.out.println(getRoutsFromJson("routs.json")
+//                    .stream()
+//                    .filter(r -> Arrays.asList((short) 3).contains(r.routType))
+//                    .map(Rout::display)
+//                    .collect(Collectors.toList())
+//            );
 //            getSchedule("10271756", "7258124");
 //            extractAllStopRoutes();
 //            System.out.println(getRouteStops("808972"));
@@ -72,13 +76,13 @@ public class Parser {
 
     public static void convertJson() throws IOException {
         List<Rout> routs = getRoutsFromJson("routs_with_stops_and_schedule.json")
-                .stream().filter(r -> JsonConverterUtil.getPublicTransportRoutTypes().contains(r.routType))
+                .stream().filter(r -> GoTransUtil.getPublicTransportRoutTypes().contains(r.routType))
                 .collect(Collectors.toList());
 
         List<GoTransRout> gtRoutes = new ArrayList<>();
 
         routs.forEach(r -> {
-            RoutType routType = JsonConverterUtil.convertRoutType(r.routType);
+            RoutType routType = GoTransUtil.convertRoutType(r.routType);
 
             if (routType == null) {
                 System.err.println("Unknown rout type for Rout " + r.routeId);
@@ -95,7 +99,7 @@ public class Parser {
                 gtRout = new GoTransRout();
                 gtRout.type = routType;
                 gtRout.name = r.routNumber;
-                gtRout.code = (routType == BUS ? "a" : "t") + Translit.apply(r.routNumber);
+                gtRout.code = GoTransUtil.getFirstRoutLetter(routType) + Translit.apply(r.routNumber);
             }
 
             setGoTransDirection(r, r.direction, r.stops)
