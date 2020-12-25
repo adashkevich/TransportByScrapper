@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.adashkevich.transport_by_parser.utils.Translit.CharCase.UPPER;
+import static com.adashkevich.transport_by_parser.utils.TranslitUtil.CharCase.UPPER;
 
-public class Translit {
+public class TranslitUtil {
 
     enum CharCase {
         UPPER, LOWER
@@ -53,7 +53,7 @@ public class Translit {
         return result == null ? c : UPPER.equals(charCase) ? result.toUpperCase() : result;
     }
 
-    public static String apply(String text) {
+    public static String translit(String text) {
         int len = text.length();
         return IntStream.range(0, len).mapToObj(i -> getChar(text.substring(i, i + 1))).collect(Collectors.joining());
     }

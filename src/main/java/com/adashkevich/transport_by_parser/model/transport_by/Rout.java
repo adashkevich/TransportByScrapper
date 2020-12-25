@@ -1,4 +1,4 @@
-package com.adashkevich.transport_by_parser.model;
+package com.adashkevich.transport_by_parser.model.transport_by;
 
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.lang3.builder.ToStringBuilder;

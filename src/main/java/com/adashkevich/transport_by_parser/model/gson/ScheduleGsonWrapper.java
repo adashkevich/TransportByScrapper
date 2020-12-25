@@ -1,6 +1,6 @@
 package com.adashkevich.transport_by_parser.model.gson;
 
-import com.adashkevich.transport_by_parser.model.Schedule;
+import com.adashkevich.transport_by_parser.model.transport_by.Schedule;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;

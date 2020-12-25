@@ -1,11 +1,11 @@
 package com.adashkevich.transport_by_parser.utils;
 
-import com.adashkevich.transport_by_parser.model.gotrans.GoTransRout.RoutType;
+import com.adashkevich.transport_by_parser.model.gotrans.RoutType;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static com.adashkevich.transport_by_parser.model.gotrans.GoTransRout.RoutType.*;
+import static com.adashkevich.transport_by_parser.model.gotrans.RoutType.*;
 
 public class GoTransUtil {
 

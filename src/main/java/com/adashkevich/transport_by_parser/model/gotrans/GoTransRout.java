@@ -4,11 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GoTransRout {
-
-    public enum RoutType {
-        BUS, TROLLEYBUS, MBUS
-    }
-
     public RoutType type;
     public String name;
     public String code;
