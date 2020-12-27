@@ -17,6 +17,8 @@ public class Stop {
     public short stopType;
     @SerializedName(value = "address", alternate = "Address")
     public String address;
+    @SerializedName(value = "point", alternate = "Point")
+    public Point point;
 
     public List<Schedule> schedules;
 

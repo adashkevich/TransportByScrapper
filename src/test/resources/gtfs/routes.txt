@@ -1,0 +1,2 @@
+"AGENCY_ID","ROUTE_COLOR","ROUTE_DESC","ROUTE_ID","ROUTE_LONG_NAME","ROUTE_SHORT_NAME","ROUTE_TEXT_COLOR","ROUTE_TYPE","ROUTE_URL"
+"gomel_get","008AFF","","1234567","Вокзал — Предприятие «Салео-Гомель»","1","A9A9A9","11","https://gomeltrans.net/routes/trolleybus/1/"
