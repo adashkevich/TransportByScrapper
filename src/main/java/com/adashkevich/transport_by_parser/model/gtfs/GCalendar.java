@@ -11,6 +11,9 @@ import java.util.Arrays;
 
 public class GCalendar {
 
+    public static final String WEEKDAYS_SERVICE_ID = "weekdays";
+    public static final String WEEKEND_SERVICE_ID = "weekend";
+
     @CsvBindByName(column = "service_id")
     private String serviceID;
     @CsvBindByName(column = "monday")
@@ -31,6 +34,17 @@ public class GCalendar {
     private String startDate;
     @CsvBindByName(column = "end_date")
     private String endDate;
+
+    public static String getShortServiceID(String serviceID) {
+        switch (serviceID) {
+            case WEEKDAYS_SERVICE_ID:
+                return "wd";
+            case WEEKEND_SERVICE_ID:
+                return "we";
+            default:
+                return "none";
+        }
+    }
 
     public static GCalendar forDays(GDay... days) {
         GCalendar gCalendar = new GCalendar();

@@ -46,7 +46,7 @@ public class Rout {
         return finishStopName + " - " + startStopName;
     }
 
-    public String  view() {
+    public String view() {
         return routNumber + ": " + getRoutName();
     }
 

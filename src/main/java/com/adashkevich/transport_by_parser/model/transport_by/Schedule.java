@@ -12,6 +12,10 @@ public class Schedule {
     @SerializedName(value = "minutes", alternate = "Minutes")
     public short minutes;
 
+    public int timestamp() {
+        return hour * 60 + minutes;
+    }
+
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);

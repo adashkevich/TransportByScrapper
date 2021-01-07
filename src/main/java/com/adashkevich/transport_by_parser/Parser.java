@@ -11,6 +11,7 @@ import com.adashkevich.transport_by_parser.model.gson.ScheduleGsonWrapper;
 import com.adashkevich.transport_by_parser.model.gson.StopGsonWrapper;
 import com.adashkevich.transport_by_parser.model.gtfs.GCalendar;
 import com.adashkevich.transport_by_parser.model.gtfs.GRoute;
+import com.adashkevich.transport_by_parser.model.gtfs.GTrip;
 import com.adashkevich.transport_by_parser.model.gtfs.emum.GDay;
 import com.adashkevich.transport_by_parser.model.transport_by.Rout;
 import com.adashkevich.transport_by_parser.model.transport_by.Schedule;
@@ -86,6 +87,7 @@ public class Parser {
 
 //            List<GRoute> gtfsRouts = CsvUtil.read(Paths.get("src/main/resources/gtfs/routes.csv"), GRoute.class);
 
+
 //            List<String> stopIDs = getRoutsFromJson("transport_by/routs_with_stops.json").stream()
 //                    .filter(r -> r.routType == 1)
 //                    .flatMap(r -> {
@@ -103,17 +105,26 @@ public class Parser {
 //                            .collect(Collectors.toList()),
 //                    Paths.get("src/main/resources/gtfs/stops.csv"));
 
-            GCalendar weekdays = GCalendar.forDays(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY);
-            weekdays.setServiceID("weekdays");
-            weekdays.setStartLocalDate(LocalDate.of(2020, 1, 1));
-            weekdays.setEndLocalDate(LocalDate.of(2022, 1, 1));
 
-            GCalendar weekend = GCalendar.forDays(SATURDAY, SUNDAY);
-            weekend.setServiceID("weekend");
-            weekend.setStartLocalDate(LocalDate.of(2020, 1, 1));
-            weekend.setEndLocalDate(LocalDate.of(2022, 1, 1));
+//            GCalendar weekdays = GCalendar.forDays(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY);
+//            weekdays.setServiceID("weekdays");
+//            weekdays.setStartLocalDate(LocalDate.of(2020, 1, 1));
+//            weekdays.setEndLocalDate(LocalDate.of(2022, 1, 1));
+//
+//            GCalendar weekend = GCalendar.forDays(SATURDAY, SUNDAY);
+//            weekend.setServiceID("weekend");
+//            weekend.setStartLocalDate(LocalDate.of(2020, 1, 1));
+//            weekend.setEndLocalDate(LocalDate.of(2022, 1, 1));
+//
+//            CsvUtil.write(Arrays.asList(weekdays, weekend), Paths.get("src/main/resources/gtfs/calendar.txt"));
 
-            CsvUtil.write(Arrays.asList(weekdays, weekend), Paths.get("src/main/resources/gtfs/calendar.txt"));
+            List<Rout> routs = getRoutsFromJson("transport_by/routs_with_stops_and_schedule.json").stream()
+                    .filter(r -> r.routType == 1).collect(Collectors.toList());
+            List<GTrip> gTrips = routs.stream().flatMap(r -> GTFSUtil.convertTrips(r).stream()).collect(Collectors.toList());
+            CsvUtil.write(gTrips, Paths.get("src/main/resources/gtfs/trips.csv"));
+            CsvUtil.write(gTrips.stream().flatMap(t -> t.getStopTimes().stream()).collect(Collectors.toList()),
+                    Paths.get("src/main/resources/gtfs/stop_times.csv"));
+
 
         } catch (Exception e) {
             e.printStackTrace();

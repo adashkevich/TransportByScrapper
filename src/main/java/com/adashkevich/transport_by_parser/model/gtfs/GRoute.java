@@ -27,7 +27,7 @@ public class GRoute {
     @CsvBindByName(column = "route_text_color")
     private String routeTextColor;
     @CsvBindByName(column = "route_sort_order")
-    private int routeSortOrder = 100;
+    private Integer routeSortOrder;
     @CsvBindByName(column = "continuous_pickup")
     private Integer continuousPickup;
     @CsvBindByName(column = "continuous_drop_off")

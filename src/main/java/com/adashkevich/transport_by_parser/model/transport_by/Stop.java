@@ -3,7 +3,9 @@ package com.adashkevich.transport_by_parser.model.transport_by;
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Stop {
 
@@ -21,6 +23,16 @@ public class Stop {
     public Point point;
 
     public List<Schedule> schedules;
+
+    public List<Schedule> getWeekdaySchedule() {
+        return schedules != null ? schedules.stream().filter(s -> s.day == 1).collect(Collectors.toList()) :
+                new ArrayList<>();
+    }
+
+    public List<Schedule> getWeekendSchedule() {
+        return schedules != null ? schedules.stream().filter(s -> s.day == 6).collect(Collectors.toList()) :
+                new ArrayList<>();
+    }
 
     @Override
     public String toString() {
