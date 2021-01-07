@@ -12,8 +12,16 @@ public class Schedule {
     @SerializedName(value = "minutes", alternate = "Minutes")
     public short minutes;
 
+    public Schedule() {}
+
+    public Schedule(short day, short hour, short minutes) {
+        this.day = day;
+        this.hour = hour;
+        this.minutes = minutes;
+    }
+
     public int timestamp() {
-        return hour * 60 + minutes;
+        return day * 24 * 60 + hour * 60 + minutes;
     }
 
     @Override

@@ -123,32 +123,28 @@ public class GTFSUtil {
         if (stops != null && !stops.isEmpty()) {
             Stop firstStop = stops.get(0);
             if (firstStop.schedules != null) {
-                List<Schedule> weekdaySchedule = firstStop.schedules.stream().filter(s -> s.day == 1)
-                        .collect(Collectors.toList());
 
-                List<GTrip> weekdayTrips = weekdaySchedule.stream().map(s -> convertTrip(r, firstStop.stopId, s, direction, WEEKDAYS_SERVICE_ID))
+                List<GTrip> weekdayTrips = firstStop.getWeekdaySchedule(3).stream()
+                        .map(s -> convertTrip(r, firstStop.stopId, s, direction, WEEKDAYS_SERVICE_ID))
                         .collect(Collectors.toList());
 
                 weekdayTrips.forEach(t -> {
                     stops.stream().skip(1).forEachOrdered(s -> {
-                        t.getLastStopTime().ifPresent(lst ->
-                                t.addStopTime(getClosestStopTime(s.stopId, lst, s.getWeekdaySchedule())));
+                        t.getLastStopTime().flatMap(lst -> getClosestStopTime(s.stopId, lst, s.getWeekdaySchedule(3)))
+                                .ifPresent(t::addStopTime);
                     });
                 });
 
                 trips.addAll(weekdayTrips);
 
-
-                List<Schedule> weekendSchedule = firstStop.schedules.stream().filter(s -> s.day == 6)
-                        .collect(Collectors.toList());
-
-                List<GTrip> weekendTrips = weekendSchedule.stream().map(s -> convertTrip(r, firstStop.stopId, s, direction, WEEKEND_SERVICE_ID))
+                List<GTrip> weekendTrips = firstStop.getWeekendSchedule(3).stream()
+                        .map(s -> convertTrip(r, firstStop.stopId, s, direction, WEEKEND_SERVICE_ID))
                         .collect(Collectors.toList());
 
                 weekendTrips.forEach(t -> {
                     stops.stream().skip(1).forEachOrdered(s -> {
-                        t.getLastStopTime().ifPresent(lst ->
-                                t.addStopTime(getClosestStopTime(s.stopId, lst, s.getWeekendSchedule())));
+                        t.getLastStopTime().flatMap(lst -> getClosestStopTime(s.stopId, lst, s.getWeekendSchedule(3)))
+                                .ifPresent(t::addStopTime);
                     });
                 });
 
@@ -168,23 +164,23 @@ public class GTFSUtil {
         gTrip.setServiceID(serviceID);
         gTrip.setTripID(generateTripID(r, sc, direction, GCalendar.getShortServiceID(serviceID)));
         gTrip.setDirectionID(GTFSHelper.getIntValue(direction));
-        gTrip.addStopTime(convertStopTime(gTrip.getTripID(), stopID, sc, 1));
+        gTrip.addStopTime(convertFirstStopTime(gTrip.getTripID(), stopID, sc));
         return gTrip;
     }
 
-    protected static GStopTime convertStopTime(String tripID, String stopID, Schedule sc, int stopSequence) {
+    protected static GStopTime convertFirstStopTime(String tripID, String stopID, Schedule sc) {
         GStopTime gStopTime = new GStopTime();
 
         gStopTime.setTripID(tripID);
         gStopTime.setArrivalTime(sc.hour, sc.minutes);
         gStopTime.setDepartureTime(sc.hour, sc.minutes);
         gStopTime.setStopID(stopID);
-        gStopTime.setStopSequence(stopSequence);
+        gStopTime.setStopSequence(1);
         gStopTime.setTimepoint(GTimepoint.EXACT.value);
         return gStopTime;
     }
 
-    protected static GStopTime getClosestStopTime(String stopID, GStopTime prevStopTime, List<Schedule> schedules) {
+    protected static Optional<GStopTime> getClosestStopTime(String stopID, GStopTime prevStopTime, List<Schedule> schedules) {
         GStopTime gStopTime = new GStopTime();
 
         Optional<Schedule> schedule = schedules.stream()
@@ -192,17 +188,18 @@ public class GTFSUtil {
                 .min(Comparator.comparing(Schedule::timestamp));
 
         if (schedule.isPresent()) {
-            gStopTime.setArrivalTime(schedule.get().hour, schedule.get().minutes);
-            gStopTime.setDepartureTime(schedule.get().hour, schedule.get().minutes);
+            gStopTime.setArrivalTime(schedule.get().day, schedule.get().hour, schedule.get().minutes);
+            gStopTime.setDepartureTime(schedule.get().day, schedule.get().hour, schedule.get().minutes);
         } else {
-            System.err.printf("Closest StopTime for rout %s and stop %s did not found%n", prevStopTime.getTripID(), stopID);
+            System.err.printf("Closest StopTime for trip %s and stop %s did not found%n", prevStopTime.getTripID(), stopID);
+            return Optional.empty();
         }
 
         gStopTime.setTripID(prevStopTime.getTripID());
         gStopTime.setStopID(stopID);
         gStopTime.setStopSequence(prevStopTime.getStopSequence() + 1);
         gStopTime.setTimepoint(prevStopTime.getTimepoint());
-        return gStopTime;
+        return Optional.of(gStopTime);
     }
 
     protected static String generateTripID(Rout r, Schedule s, boolean direction, String shortServiceID) {

@@ -52,7 +52,11 @@ public class GStopTime {
     }
 
     public void setArrivalTime(short h, short m) {
-        this.arrivalTime = String.format("%02d:%02d:00", h, m);
+        setArrivalTime((short) 0, h, m);
+    }
+
+    public void setArrivalTime(short day, short h, short m) {
+        this.arrivalTime = String.format("%02d:%02d:00", day * 24 + h, m);
     }
 
     public String getDepartureTime() {
@@ -64,7 +68,11 @@ public class GStopTime {
     }
 
     public void setDepartureTime(short h, short m) {
-        this.departureTime = String.format("%02d:%02d:00", h, m);
+        setDepartureTime((short) 0, h, m);
+    }
+
+    public void setDepartureTime(short day, short h, short m) {
+        this.departureTime = String.format("%02d:%02d:00", day * 24 + h, m);
     }
 
     public String getStopID() {
