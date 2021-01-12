@@ -1,5 +1,6 @@
 package com.adashkevich.transport_by_parser;
 
+import com.adashkevich.transport_by_parser.model.dto.Area;
 import com.adashkevich.transport_by_parser.model.dto.StopRout;
 import com.adashkevich.transport_by_parser.model.gotrans.GoTransDirection;
 import com.adashkevich.transport_by_parser.model.gotrans.GoTransRout;
@@ -9,36 +10,33 @@ import com.adashkevich.transport_by_parser.model.gson.RoutGsonWrapper;
 import com.adashkevich.transport_by_parser.model.gson.RouteStopsGsonWrapper;
 import com.adashkevich.transport_by_parser.model.gson.ScheduleGsonWrapper;
 import com.adashkevich.transport_by_parser.model.gson.StopGsonWrapper;
-import com.adashkevich.transport_by_parser.model.gtfs.GCalendar;
-import com.adashkevich.transport_by_parser.model.gtfs.GRoute;
-import com.adashkevich.transport_by_parser.model.gtfs.GTrip;
-import com.adashkevich.transport_by_parser.model.gtfs.emum.GDay;
 import com.adashkevich.transport_by_parser.model.transport_by.Rout;
 import com.adashkevich.transport_by_parser.model.transport_by.Schedule;
 import com.adashkevich.transport_by_parser.model.transport_by.Stop;
-import com.adashkevich.transport_by_parser.utils.*;
+import com.adashkevich.transport_by_parser.utils.GoTransUtil;
+import com.adashkevich.transport_by_parser.utils.HttpUtil;
+import com.adashkevich.transport_by_parser.utils.TranslitUtil;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import okhttp3.*;
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static com.adashkevich.transport_by_parser.model.gtfs.emum.GDay.*;
 
 public class Parser {
 
@@ -49,6 +47,30 @@ public class Parser {
 
     public static void main(String[] args) {
         try {
+            if (args.length == 0) {
+                System.err.println("Program argument should be present");
+            } else {
+                switch (args[0]) {
+                    case "convert:gotrans":
+                        convertToGoTransFormat(args[1]);
+                        break;
+                    case "scrape:stops":
+                        scrapeStops(Double.parseDouble(args[1]), Double.parseDouble(args[2]), Double.parseDouble(args[3]), Double.parseDouble(args[4]));
+                        break;
+                    case "scrape:routs":
+                        scrapeAllStopRoutes(args[1]);
+                        break;
+                    case "scrape:routs_stops":
+                        scrapeRoutesStops(args[1]);
+                        break;
+                    case "scrape:schedules":
+                        scrapeSchedules(args[1]);
+                        break;
+                    default:
+                        System.err.printf("Command %s not found. List of available commands: " +
+                                "convert:gotrans, scrape:stops, scrape:routs, scrape:routs_stops, scrape:schedules%n", args[0]);
+                }
+            }
 //            parseStops();
 //            System.out.println(getStopsFromJson().size());
 //            getStopRoutes("6065164");
@@ -62,9 +84,9 @@ public class Parser {
 //                    .collect(Collectors.toList())
 //            );
 //            getSchedule("10271756", "7258124");
-//            extractAllStopRoutes();
+//            scrapeAllStopRoutes();
 //            System.out.println(getRouteStops("808972"));
-//            setStopsToRoutes();
+//            scrapeRoutesStops();
 //            setSchedulesToStops();
 //            convertJson();
 //            trolleybusChecker();
@@ -118,12 +140,12 @@ public class Parser {
 //
 //            CsvUtil.write(Arrays.asList(weekdays, weekend), Paths.get("src/main/resources/gtfs/calendar.txt"));
 
-            List<Rout> routs = getRoutsFromJson("transport_by/routs_with_stops_and_schedule.json").stream()
-                    .filter(r -> r.routType == 1).collect(Collectors.toList());
-            List<GTrip> gTrips = routs.stream().flatMap(r -> GTFSUtil.convertTrips(r).stream()).collect(Collectors.toList());
-            CsvUtil.write(gTrips, Paths.get("src/main/resources/gtfs/trips.csv"));
-            CsvUtil.write(gTrips.stream().flatMap(t -> t.getStopTimes().stream()).collect(Collectors.toList()),
-                    Paths.get("src/main/resources/gtfs/stop_times.csv"));
+//            List<Rout> routs = getRoutsFromJson("transport_by/routs_with_stops_and_schedule.json").stream()
+//                    .filter(r -> r.routType == 1).collect(Collectors.toList());
+//            List<GTrip> gTrips = routs.stream().flatMap(r -> GTFSUtil.convertTrips(r).stream()).collect(Collectors.toList());
+//            CsvUtil.write(gTrips, Paths.get("src/main/resources/gtfs/trips.csv"));
+//            CsvUtil.write(gTrips.stream().flatMap(t -> t.getStopTimes().stream()).collect(Collectors.toList()),
+//                    Paths.get("src/main/resources/gtfs/stop_times.csv"));
 
 
         } catch (Exception e) {
@@ -137,8 +159,12 @@ public class Parser {
         System.out.println(trolleybus.stream().filter(r -> !trolleybusRoutesNumbers.contains(r.routNumber)).map(r -> r.routNumber).sorted().collect(Collectors.joining(",")));
     }
 
-    public static void convertJson() throws IOException {
-        List<Rout> routs = getRoutsFromJson("transport_by/routs_with_stops_and_schedule.json")
+    public static void convertToGoTransFormat(String transportByJsonPath) throws IOException {
+        convertToGoTransFormat(transportByJsonPath, "go_trans.json");
+    }
+
+    public static void convertToGoTransFormat(String transportByJsonPath, String destinationFile) throws IOException {
+        List<Rout> routs = getRoutsFromFileSystem(transportByJsonPath)
                 .stream().filter(r -> GoTransUtil.getPublicTransportRoutTypes().contains(r.routType))
                 .collect(Collectors.toList());
 
@@ -162,7 +188,7 @@ public class Parser {
             gtRoutes.add(gtRout);
         });
 
-        FileUtils.writeStringToFile(new File("gotrans/go_trans.json"), gson.toJson(gtRoutes), Charset.defaultCharset());
+        FileUtils.writeStringToFile(new File(destinationFile), gson.toJson(gtRoutes), StandardCharsets.UTF_8);
     }
 
     public static Optional<GoTransDirection> setGoTransDirection(Rout rout, boolean isForward, List<Stop> stops) {
@@ -206,16 +232,20 @@ public class Parser {
         return Optional.empty();
     }
 
-    public static void setSchedulesToStops() throws IOException {
-        List<Rout> routs = getRoutsFromJson("transport_by/routs_with_stops.json");
+    public static void scrapeSchedules(String routesWithStopsFile) throws IOException {
+        scrapeSchedules(routesWithStopsFile, "routs_with_stops_and_schedule.json");
+    }
+
+    public static void scrapeSchedules(String routesWithStopsFile, String destinationFile) throws IOException {
+        List<Rout> routs = getRoutsFromFileSystem(routesWithStopsFile);
 
         routs.forEach(r -> {
-            System.out.println("Start processing Rout " + r.routeId);
+            System.out.println("Start scraping Rout " + r.routeId);
             setScheduleToStops(r.stops, r.routeId);
             setScheduleToStops(r.backwardStops, r.routeId);
         });
 
-        FileUtils.writeStringToFile(new File("transport_by/routs_with_stops_and_schedule.json"), gson.toJson(routs), Charset.defaultCharset());
+        FileUtils.writeStringToFile(new File(destinationFile), gson.toJson(routs), StandardCharsets.UTF_8);
     }
 
     public static void setScheduleToStops(List<Stop> stops, String routeId) {
@@ -231,8 +261,12 @@ public class Parser {
         }
     }
 
-    public static void setStopsToRoutes() throws IOException {
-        List<Rout> routs = getRoutsFromJson();
+    public static void scrapeRoutesStops(String routesJsonPath) throws IOException {
+        scrapeRoutesStops(routesJsonPath, "routs_with_stops.json");
+    }
+
+    public static void scrapeRoutesStops(String routesJsonPath, String destinationFile) throws IOException {
+        List<Rout> routs = getRoutsFromFileSystem(routesJsonPath);
 
         routs.forEach(r -> {
             try {
@@ -240,12 +274,48 @@ public class Parser {
                 r.stops = routStops.getLeft();
                 r.backwardStops = routStops.getRight();
             } catch (Exception e) {
-                System.out.println("Failed to get Stops for rout " + r.routeId);
-                e.printStackTrace();
+                System.err.println("Failed to get Stops for rout " + r.routeId);
+//                e.printStackTrace();
             }
         });
 
-        FileUtils.writeStringToFile(new File("transport_by/routs_with_stops.json"), gson.toJson(routs), Charset.defaultCharset());
+        FileUtils.writeStringToFile(new File(destinationFile), gson.toJson(routs), StandardCharsets.UTF_8);
+    }
+
+    public static void scrapeStops(double top, double left, double bottom, double right) throws IOException {
+        scrapeStops(top, left, bottom, right, "stops.json");
+    }
+
+    public static void scrapeStops(double top, double left, double bottom, double right, String destinationFile) throws IOException {
+        List<Stop> stops = getStops(top, left, bottom, right);
+
+        FileUtils.writeStringToFile(new File(destinationFile), gson.toJson(stops), StandardCharsets.UTF_8);
+    }
+
+    public static List<Stop> getStops(double top, double left, double bottom, double right) throws IOException {
+        RequestBody body = RequestBody.create(gson.toJson(new Area(top, left, bottom, right)), MediaType.get("application/json; charset=utf-8"));
+
+        Request request = new Request.Builder()
+                .url("http://212.98.184.62/api/GetStops")
+                .post(body)
+                .build();
+
+        Response response = HttpUtil.client.newCall(request).execute();
+
+        List<Stop> stops = new ArrayList<>();
+
+        if (response.isSuccessful()) {
+            String content = Objects.requireNonNull(response.body()).string();
+
+            parseTransportByResponse(content, (entity) -> {
+                stops.add(gson.fromJson(entity, StopGsonWrapper.class).result);
+            });
+        } else {
+            System.err.println("Failed to get stops");
+            System.err.println(Objects.requireNonNull(response.body()).string());
+        }
+
+        return stops;
     }
 
     public static Pair<List<Stop>, List<Stop>> getRouteStops(String routId) throws IOException {
@@ -262,10 +332,14 @@ public class Parser {
         return Pair.of(wrapper.stops, wrapper.backwardStops);
     }
 
-    public static void extractAllStopRoutes() throws IOException {
-        List<Rout> routs = getAllStopsRoutes(getStopsFromJson());
+    public static void scrapeAllStopRoutes(String stopsJsonPath) throws IOException {
+        scrapeAllStopRoutes(stopsJsonPath, "routs.json");
+    }
 
-        FileUtils.writeStringToFile(new File("transport_by/routs.json"), gson.toJson(routs), Charset.defaultCharset());
+    public static void scrapeAllStopRoutes(String stopsJsonPath, String destinationFile) throws IOException {
+        List<Rout> routs = getAllStopsRoutes(getStopsFromJson(stopsJsonPath));
+
+        FileUtils.writeStringToFile(new File(destinationFile), gson.toJson(routs), StandardCharsets.UTF_8);
     }
 
     public static List<Rout> getAllStopsRoutes(@NotNull List<Stop> stops) {
@@ -308,7 +382,7 @@ public class Parser {
             System.err.println(Objects.requireNonNull(response.body()).string());
         }
 
-//        FileUtils.writeStringToFile(new File("schedule.json"), gson.toJson(routs), Charset.defaultCharset());
+//        FileUtils.writeStringToFile(new File("schedule.json"), gson.toJson(routs), StandardCharsets.UTF_8);
         return schedules;
     }
 
@@ -330,10 +404,11 @@ public class Parser {
             routs.add(gson.fromJson(entity, RoutGsonWrapper.class).result);
         });
 
-//        FileUtils.writeStringToFile(new File("routs.json"), gson.toJson(routs), Charset.defaultCharset());
+//        FileUtils.writeStringToFile(new File("routs.json"), gson.toJson(routs), StandardCharsets.UTF_8);
         return routs;
     }
 
+    @Deprecated
     public static void parseStops() throws IOException {
         String content = IOUtils.toString(Objects.requireNonNull(Parser.class.getClassLoader().getResourceAsStream("transport_by/all_stops.response")), StandardCharsets.UTF_8);
 
@@ -343,7 +418,7 @@ public class Parser {
             stops.add(gson.fromJson(entity, StopGsonWrapper.class).result);
         });
 
-        FileUtils.writeStringToFile(new File("src/main/resources/transport_by/stops.json"), gson.toJson(stops), Charset.defaultCharset());
+        FileUtils.writeStringToFile(new File("src/main/resources/transport_by/stops.json"), gson.toJson(stops), StandardCharsets.UTF_8);
     }
 
     public static void parseTransportByResponse(String responseContent, Consumer<String> entityProcessor) {
@@ -373,12 +448,24 @@ public class Parser {
                 }.getType());
     }
 
+    public static List<Stop> getStopsFromJson(String filePath) throws IOException {
+        return gson.fromJson(IOUtils.toString(new FileInputStream(filePath), StandardCharsets.UTF_8),
+                new TypeToken<ArrayList<Stop>>() {
+                }.getType());
+    }
+
     public static List<Rout> getRoutsFromJson() throws IOException {
         return getRoutsFromJson("transport_by/routs.json");
     }
 
     public static List<Rout> getRoutsFromJson(String fileName) throws IOException {
         return gson.fromJson(IOUtils.toString(Objects.requireNonNull(Parser.class.getClassLoader().getResourceAsStream(fileName)), StandardCharsets.UTF_8),
+                new TypeToken<ArrayList<Rout>>() {
+                }.getType());
+    }
+
+    public static List<Rout> getRoutsFromFileSystem(String filePath) throws IOException {
+        return gson.fromJson(IOUtils.toString(new FileInputStream(filePath), StandardCharsets.UTF_8),
                 new TypeToken<ArrayList<Rout>>() {
                 }.getType());
     }
