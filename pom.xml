@@ -84,7 +84,8 @@
                         <phase>none</phase>
                     </execution>
                     <execution>
-                        <phase>deploy</phase>
+                        <id>dist-update</id>
+                        <phase>install</phase>
                         <configuration>
                             <target>
                                 <copy file="target/${project.artifactId}-${project.version}.jar" tofile="dist/${project.artifactId}-${project.version}.jar"/>
